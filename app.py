@@ -59,6 +59,20 @@ def add_collection_form():
     flask.g.db['responsesAddCollection'].insert_one(args)
     return flask.Response(status=200)
 
+@app.route('/forms/<entry>/list/', methods=['GET'])
+def get_entry_list(entry):
+    args = dict(flask.request.args)
+    if not (token := args.get('token')) or\
+       token != flask.current_app.config.get('getToken'):
+        return flask.Response(status=401)
+    if entry == 'add_biobank':
+        hits = list(flask.g.db['responsesAddBiobank'].find({}, {'_id': 0}))
+    elif entry == 'add_collection':
+        hits = list(flask.g.db['responsesAddCollection'].find({}, {'_id': 0}))
+    else:
+        return flask.Response(status=404)
+    return flask.jsonify(hits)
+
 
 @app.errorhandler(400)
 def error_bad_request(_):
