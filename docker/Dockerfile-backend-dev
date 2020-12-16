@@ -1,0 +1,14 @@
+FROM python:alpine
+
+COPY ./requirements.txt /requirements.txt
+
+RUN pip3 install -r /requirements.txt
+
+ADD . /code
+COPY config.yaml.sample /config.yaml
+RUN sed -i 's/host:.*/host: "db"/' /config.yaml
+WORKDIR /code/
+
+ENV PYTHONPATH /code/
+
+CMD ["python3", "app.py", "--config_file", "/config.yaml"]

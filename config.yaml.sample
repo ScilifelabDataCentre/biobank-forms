@@ -1,0 +1,20 @@
+---
+mongo:
+  host: "localhost"
+  port: 27017
+  user: "mongoadmin"
+  password: "mongopassword"
+  db: "tracker"
+
+flask:
+  port: 5000
+  secret: "ZDczNTE3YjYtMmJhZC00YzI3LWI2YmEtOTUzYWRmOWQ5ZTA5CmI1YzFlNjZkLTMyMjMtNGJhNy05NWQyLTA2NTVjNzMzYzlhYQo="
+  debug: true
+
+tokens:
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+
