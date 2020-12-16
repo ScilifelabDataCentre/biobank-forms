@@ -3,6 +3,7 @@
 import logging
 
 import flask
+import flask_cors
 
 import config
 import utils
@@ -11,6 +12,7 @@ app = flask.Flask(__name__)  # pylint: disable=invalid-name
 appconf = config.init()
 app.config.update(appconf)
 
+cors = flask_cors.CORS(app, resources={r"/forms/": {"origins": "*"}})
 
 @app.before_request
 def prepare():
@@ -29,6 +31,11 @@ def finalize(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
+
+
+@app.route('/heartbeat/', methods=['GET'])
+def heartbeat():
+    return flask.Response(status=200)
 
 
 @app.route('/forms/add_biobank/', methods=['GET'])
