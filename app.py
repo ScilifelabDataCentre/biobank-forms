@@ -14,6 +14,18 @@ app.config.update(appconf)
 
 cors = flask_cors.CORS(app, resources={r"/forms/": {"origins": "*"}})
 
+SUCCESS_PAGE = '''<html>
+ <body>
+  Data successfully added. <a href="PLACEHOLDER">Back to the form.</a>
+ </body>
+</html>'''
+
+FAIL_PAGE = '''<html>
+ <body>
+  Failed to add data: bad token. <a href="PLACEHOLDER">Back to the form.</a>
+ </body>
+</html>'''
+
 @app.before_request
 def prepare():
     """Open the database connection and get the current user."""
@@ -38,24 +50,22 @@ def heartbeat():
     return flask.Response(status=200)
 
 
-PAGE = '''<html>
- <body>
-  Data successfully added. <a href="PLACEHOLDER">Back to the form.</a>
- </body>
-</html>'''
-
 @app.route('/forms/add_biobank/', methods=['GET'])
 def add_biobank_form():
     args = dict(flask.request.args)
     if not (token := args.get('token')) or\
        token not in flask.current_app.config.get('tokens'):
-        return flask.Response(status=401)
+        if 'originUrl' in args:
+            page = FAIL_PAGE.replace('PLACEHOLDER', args['originUrl'])
+        else:
+            page = FAIL_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+        return flask.Response(page, status=401)
     args['timestamp'] = utils.make_timestamp()
     flask.g.db['responsesAddBiobank'].insert_one(args)
     if 'originUrl' in args:
-        page = PAGE.replace('PLACEHOLDER', args['originUrl'])
+        page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
     else:
-        page = PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+        page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
     return flask.Response(page, status=200)
 
 
@@ -64,10 +74,19 @@ def add_collection_form():
     args = dict(flask.request.args)
     if not (token := args.get('token')) or\
        token not in flask.current_app.config.get('tokens'):
-        return flask.Response(status=401)
+        if 'originUrl' in args:
+            page = FAIL_PAGE.replace('PLACEHOLDER', args['originUrl'])
+        else:
+            page = FAIL_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+        return flask.Response(page, status=401)
     args['timestamp'] = utils.make_timestamp()
     flask.g.db['responsesAddCollection'].insert_one(args)
-    return flask.Response(status=200)
+    if 'originUrl' in args:
+        page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
+    else:
+        page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+    return flask.Response(page, status=200)
+
 
 @app.route('/forms/<entry>/list/', methods=['GET'])
 def get_entry_list(entry):
