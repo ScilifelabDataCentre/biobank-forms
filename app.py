@@ -38,6 +38,12 @@ def heartbeat():
     return flask.Response(status=200)
 
 
+PAGE = '''<html>
+ <body>
+  Data successfully added. <a href="PLACEHOLDER">Back to the form.</a>
+ </body>
+</html>'''
+
 @app.route('/forms/add_biobank/', methods=['GET'])
 def add_biobank_form():
     args = dict(flask.request.args)
@@ -46,7 +52,11 @@ def add_biobank_form():
         return flask.Response(status=401)
     args['timestamp'] = utils.make_timestamp()
     flask.g.db['responsesAddBiobank'].insert_one(args)
-    return flask.Response(status=200)
+    if 'originUrl' in args:
+        page = PAGE.replace('PLACEHOLDER', args['originUrl'])
+    else:
+        page = PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+    return flask.Response(page, status=200)
 
 
 @app.route('/forms/add_collection/', methods=['GET'])
