@@ -1,4 +1,6 @@
 Flask
 flask_cors
+requests
 pymongo
 PyYAML
+Flask-Mail

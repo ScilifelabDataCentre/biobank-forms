@@ -1,14 +1,19 @@
 """Main app for the Data Tracker."""
 
+import html
 import logging
 
+import requests
 import flask
+import flask_mail
 import flask_cors
 
 import config
 import utils
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
+mail = flask_mail.Mail(app)
+
 appconf = config.init()
 app.config.update(appconf)
 
@@ -16,7 +21,7 @@ cors = flask_cors.CORS(app, resources={r"/forms/": {"origins": "*"}})
 
 SUCCESS_PAGE = '''<html>
  <body>
-  Data successfully added. <a href="PLACEHOLDER">Back to the form.</a>
+  Data successfully added. Thank you for your contribution. <a href="PLACEHOLDER">Back to the form.</a>
  </body>
 </html>'''
 
@@ -68,6 +73,43 @@ def add_biobank_form():
         page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
     return flask.Response(page, status=200)
 
+SUGGESTION_MAIL_BODY = '''New suggestion for the Covid-19 Data Portal:
+
+From: PLACEHOLDER_NAME (PLACEHOLDER_EMAIL)
+
+Type: PLACEHOLDER_TYPE
+
+Description: PLACEHOLDER_DESCRIPTION
+'''
+
+SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
+                    'Journal_publication', 'Preprint', 'Funding_opportunity',
+                    'Event', 'Other')
+
+@app.route('/forms/suggestion/', methods=['GET'])
+def suggest_form():
+    rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
+                              {'secret': current_app.config.get('suggestions')['recaptacha_secret'],
+                               'response': args['g-recaptcha-response']})
+    if not rec_check.json()['success']:
+        flask.Response(status=400)
+    args = dict(flask.request.args)
+    args['timestamp'] = utils.make_timestamp()
+    flask.g.db['suggestions'].insert_one(args)
+    mail_body = SUGGESTION_MAIL_BODY[:]
+    mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
+    mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
+    mail_body = mail_body.replace('PLACEHOLDER_DESCRIPTION', args['Description'])
+    types = ', '.join(topic for topic in SUGGESTION_TYPES if topic in args)
+    mail_body = mail_body.replace('PLACEHOLDER_TYPES', types)
+    mail.send(flask_mail.Message(mail_body,
+                                 recipients=[current_app.config.get('suggestions')['email_receiver']]))
+    if 'originUrl' in args:
+        page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
+    else:
+        page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
+    return flask.Response(page, status=200)
+
 
 @app.route('/forms/add_collection/', methods=['GET'])
 def add_collection_form():
@@ -98,6 +140,8 @@ def get_entry_list(entry):
         hits = list(flask.g.db['responsesAddBiobank'].find({}, {'_id': 0}))
     elif entry == 'add_collection':
         hits = list(flask.g.db['responsesAddCollection'].find({}, {'_id': 0}))
+    elif entry == 'suggestion':
+        hits = list(flask.g.db['suggestions'].find({}, {'_id': 0}))
     else:
         return flask.Response(status=404)
     return flask.jsonify(hits)

@@ -62,4 +62,11 @@ def init() -> dict:
     config['SECRET_KEY'] = config['flask']['secret']
     config['DEBUG'] = config['flask']['debug']
     config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    config['MAIL_USE_TLS'] = True
+    config['MAIL_SERVER'] = config['mail']['host']
+    config['MAIL_PORT'] = config['mail']['port']
+    config['MAIL_USERNAME'] = config['mail']['username']
+    config['MAIL_PASSWORD'] = config['mail']['password']
+    config['MAIL_DEFAULT_SENDER'] = config['mail']['email']
+
     return config
