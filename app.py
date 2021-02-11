@@ -102,7 +102,7 @@ def suggest_form():
     mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
     mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
     mail_body = mail_body.replace('PLACEHOLDER_DESCRIPTION', args['Description'])
-    types = ', '.join(topic for topic in SUGGESTION_TYPES if topic in args)
+    types = ', '.join(topic for topic in SUGGESTION_TYPES if (topic in args and args[topic] == 'on'))
     mail_body = mail_body.replace('PLACEHOLDER_TYPES', types)
     mail.send(flask_mail.Message(mail_body,
                                  recipients=[current_app.config.get('suggestions')['email_receiver']]))
