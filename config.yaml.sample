@@ -4,11 +4,11 @@ mongo:
   port: 27017
   user: "mongoadmin"
   password: "mongopassword"
-  db: "tracker"
+  db: "name"
 
 flask:
   port: 5000
-  secret: "ZDczNTE3YjYtMmJhZC00YzI3LWI2YmEtOTUzYWRmOWQ5ZTA5CmI1YzFlNjZkLTMyMjMtNGJhNy05NWQyLTA2NTVjNzMzYzlhYQo="
+  secret: "secret_value"
   debug: true
 
 tokens:
@@ -18,4 +18,15 @@ tokens:
   - "4"
   - "5"
 
+mail:
+  host: localhost
+  port: 423
+  username: local
+  password: host
+  email: example@example.com
+
 getToken: "1234"
+
+suggestions:
+  email_receiver: example@example.com
+  recaptcha_secret: "token"
