@@ -88,14 +88,16 @@ SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
 
 @app.route('/forms/suggestion/', methods=['GET'])
 def suggest_form():
+    args = dict(flask.request.args)
     rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
-                              {'secret': current_app.config.get('suggestions')['recaptacha_secret'],
+                              {'secret': flask.current_app.config.get('suggestions')['recaptcha_secret'],
                                'response': args['g-recaptcha-response']})
     if not rec_check.json()['success']:
         flask.Response(status=400)
-    args = dict(flask.request.args)
+
     args['timestamp'] = utils.make_timestamp()
     flask.g.db['suggestions'].insert_one(args)
+
     mail_body = SUGGESTION_MAIL_BODY[:]
     mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
     mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
