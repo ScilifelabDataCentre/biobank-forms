@@ -96,6 +96,7 @@ def suggest_form():
         flask.Response(status=400)
 
     args['timestamp'] = utils.make_timestamp()
+    del args['g-recaptcha-response']
     flask.g.db['suggestions'].insert_one(args)
 
     mail_body = SUGGESTION_MAIL_BODY[:]
@@ -105,7 +106,7 @@ def suggest_form():
     types = ', '.join(topic for topic in SUGGESTION_TYPES if (topic in args and args[topic] == 'on'))
     mail_body = mail_body.replace('PLACEHOLDER_TYPES', types)
     mail.send(flask_mail.Message(mail_body,
-                                 recipients=[current_app.config.get('suggestions')['email_receiver']]))
+                                 recipients=[flask.current_app.config.get('suggestions')['email_receiver']]))
     if 'originUrl' in args:
         page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
     else:
