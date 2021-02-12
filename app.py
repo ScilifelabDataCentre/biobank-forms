@@ -1,6 +1,5 @@
 """Main app for the Data Tracker."""
 
-import html
 import logging
 
 import requests
@@ -12,10 +11,10 @@ import config
 import utils
 
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
-mail = flask_mail.Mail(app)
 
 appconf = config.init()
 app.config.update(appconf)
+mail = flask_mail.Mail(app)
 
 cors = flask_cors.CORS(app, resources={r"/forms/": {"origins": "*"}})
 
@@ -58,8 +57,8 @@ def heartbeat():
 @app.route('/forms/add_biobank/', methods=['GET'])
 def add_biobank_form():
     args = dict(flask.request.args)
-    if not (token := args.get('token')) or\
-       token not in flask.current_app.config.get('tokens'):
+    token = args.get('token')
+    if not token or token not in flask.current_app.config.get('tokens'):
         if 'originUrl' in args:
             page = FAIL_PAGE.replace('PLACEHOLDER', args['originUrl'])
         else:
@@ -88,25 +87,33 @@ SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
 
 @app.route('/forms/suggestion/', methods=['GET'])
 def suggest_form():
+    logging.error(flask.current_app.config.items())
+    logging.error(dir(flask.current_app.config))
     args = dict(flask.request.args)
-    rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
-                              {'secret': flask.current_app.config.get('suggestions')['recaptcha_secret'],
-                               'response': args['g-recaptcha-response']})
-    if not rec_check.json()['success']:
-        flask.Response(status=400)
+    if 'g-recaptcha-response' in args:
+        rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
+                                  {'secret': app.config.get('suggestions')['recaptcha_secret'],
+                                   'response': args['g-recaptcha-response']})
+        if not rec_check.json()['success']:
+            return flask.Response(status=400)
+    else:
+        return flask.Response(status=400)
 
     args['timestamp'] = utils.make_timestamp()
-    del args['g-recaptcha-response']
+    args['types'] = ', '.join(topic for topic in SUGGESTION_TYPES if (topic in args and
+                                                                      args[topic] == 'on'))
     flask.g.db['suggestions'].insert_one(args)
 
+    message = flask_mail.Message('New suggestion for the Covid-19 Data Portal',
+                                 sender=flask.current_app.config.get('mail')['email'],
+                                 recipients=[app.config.get('suggestions')['email_receiver']])
     mail_body = SUGGESTION_MAIL_BODY[:]
     mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
     mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
     mail_body = mail_body.replace('PLACEHOLDER_DESCRIPTION', args['Description'])
-    types = ', '.join(topic for topic in SUGGESTION_TYPES if (topic in args and args[topic] == 'on'))
-    mail_body = mail_body.replace('PLACEHOLDER_TYPES', types)
-    mail.send(flask_mail.Message(mail_body,
-                                 recipients=[flask.current_app.config.get('suggestions')['email_receiver']]))
+    mail_body = mail_body.replace('PLACEHOLDER_TYPE', args['types'])
+    message.body = mail_body
+    mail.send(message)
     if 'originUrl' in args:
         page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
     else:
@@ -114,11 +121,12 @@ def suggest_form():
     return flask.Response(page, status=200)
 
 
+
 @app.route('/forms/add_collection/', methods=['GET'])
 def add_collection_form():
     args = dict(flask.request.args)
-    if not (token := args.get('token')) or\
-       token not in flask.current_app.config.get('tokens'):
+    token = args.get('token')
+    if not token or token not in flask.current_app.config.get('tokens'):
         if 'originUrl' in args:
             page = FAIL_PAGE.replace('PLACEHOLDER', args['originUrl'])
         else:
@@ -136,8 +144,8 @@ def add_collection_form():
 @app.route('/forms/<entry>/list/', methods=['GET'])
 def get_entry_list(entry):
     args = dict(flask.request.args)
-    if not (token := args.get('token')) or\
-       token != flask.current_app.config.get('getToken'):
+    token = args.get('token')
+    if not token or token not in flask.current_app.config.get('getToken'):
         return flask.Response(status=401)
     if entry == 'add_biobank':
         hits = list(flask.g.db['responsesAddBiobank'].find({}, {'_id': 0}))
@@ -148,30 +156,6 @@ def get_entry_list(entry):
     else:
         return flask.Response(status=404)
     return flask.jsonify(hits)
-
-
-@app.errorhandler(400)
-def error_bad_request(_):
-    """Make sure a simple 400 is returned instead of an html page."""
-    return flask.Response(status=400)
-
-
-@app.errorhandler(401)
-def error_unauthorized(_):
-    """Make sure a simple 401 is returned instead of an html page."""
-    return flask.Response(status=401)
-
-
-@app.errorhandler(403)
-def error_forbidden(_):
-    """Make sure a simple 403 is returned instead of an html page."""
-    return flask.Response(status=403)
-
-
-@app.errorhandler(404)
-def error_not_found(_):
-    """Make sure a simple 404 is returned instead of an html page."""
-    return flask.Response(status=404)
 
 
 if __name__ == '__main__':
