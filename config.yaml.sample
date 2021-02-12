@@ -20,7 +20,7 @@ tokens:
 
 mail:
   host: localhost
-  port: 423
+  port: 587
   username: local
   password: host
   email: example@example.com
