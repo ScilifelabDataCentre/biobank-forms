@@ -87,8 +87,6 @@ SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
 
 @app.route('/forms/suggestion/', methods=['GET'])
 def suggest_form():
-    logging.error(flask.current_app.config.items())
-    logging.error(dir(flask.current_app.config))
     args = dict(flask.request.args)
     if 'g-recaptcha-response' in args:
         rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
