@@ -54,9 +54,12 @@ def heartbeat():
     return flask.Response(status=200)
 
 
-@app.route('/forms/add_biobank/', methods=['GET'])
+@app.route('/forms/add_biobank/', methods=['GET', 'POST'])
 def add_biobank_form():
-    args = dict(flask.request.args)
+    if flask.request.method == 'GET':
+        args = dict(flask.request.args)
+    elif flask.request.method == 'POST':
+        args = dict(flask.request.form)
     token = args.get('token')
     if not token or token not in flask.current_app.config.get('tokens'):
         if 'originUrl' in args:
@@ -72,6 +75,7 @@ def add_biobank_form():
         page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
     return flask.Response(page, status=200)
 
+
 SUGGESTION_MAIL_BODY = '''New suggestion for the Covid-19 Data Portal:
 
 From: PLACEHOLDER_NAME (PLACEHOLDER_EMAIL)
@@ -85,9 +89,12 @@ SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
                     'Journal_publication', 'Preprint', 'Funding_opportunity',
                     'Event', 'Other')
 
-@app.route('/forms/suggestion/', methods=['GET'])
+@app.route('/forms/suggestion/', methods=['GET', 'POST'])
 def suggest_form():
-    args = dict(flask.request.args)
+    if flask.request.method == 'GET':
+        args = dict(flask.request.args)
+    elif flask.request.method == 'POST':
+        args = dict(flask.request.form)
     if 'g-recaptcha-response' in args:
         rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
                                   {'secret': app.config.get('suggestions')['recaptcha_secret'],
@@ -120,9 +127,12 @@ def suggest_form():
 
 
 
-@app.route('/forms/add_collection/', methods=['GET'])
+@app.route('/forms/add_collection/', methods=['GET', 'POST'])
 def add_collection_form():
-    args = dict(flask.request.args)
+    if flask.request.method == 'GET':
+        args = dict(flask.request.args)
+    elif flask.request.method == 'POST':
+        args = dict(flask.request.form)
     token = args.get('token')
     if not token or token not in flask.current_app.config.get('tokens'):
         if 'originUrl' in args:
