@@ -28,5 +28,6 @@ mail:
 getToken: "1234"
 
 suggestions:
-  email_receiver: example@example.com
+  email_receivers:
+    - "example@example.com"
   recaptcha_secret: "token"
