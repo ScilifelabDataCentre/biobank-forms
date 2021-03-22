@@ -111,7 +111,7 @@ def suggest_form():
 
     message = flask_mail.Message('New suggestion for the Covid-19 Data Portal',
                                  sender=flask.current_app.config.get('mail')['email'],
-                                 recipients=[app.config.get('suggestions')['email_receivers']])
+                                 recipients=app.config.get('suggestions')['email_receivers'])
     mail_body = SUGGESTION_MAIL_BODY[:]
     mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
     mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
