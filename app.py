@@ -125,51 +125,6 @@ def suggest_form():
         page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the form.</a>', '')
     return flask.Response(page, status=200)
 
-OMICRON_ANNOUNCEMENT_MAIL_BODY = '''New suggested announcement for the Omicron VoC page on the COVID-19 Data Portal:
-
-Name: PLACEHOLDER_NAME
-Contact: PNACEHOLDER_CONTACT
-Announcement title: PLACEHOLDER_ANNOUCNEMENT_TITLE
-Announcement text: PLACEHOLDER_ANNOUNCEMENT_TEXT
-Submission timestamp: PLACEHOLDER_SUBMISSION_TIMESTAMP
-
-'''
-
-@app.route('/forms/omicron_announcement/', methods=['GET', 'POST'])
-def omicron_announcement_form():
-    if flask.request.method == 'GET':
-        args = dict(flask.request.args)
-    elif flask.request.method == 'POST':
-        args = dict(flask.request.form)
-    if 'g-recaptcha-response' in args:
-        rec_check = requests.post('https://www.google.com/recaptcha/api/siteverify',
-                                  {'secret': app.config.get('suggestions')['recaptcha_secret'],
-                                   'response': args['g-recaptcha-response']})
-        if not rec_check.json()['success']:
-            return flask.Response(status=400)
-    else:
-        return flask.Response(status=400)
-
-    args['timestamp'] = utils.make_timestamp()
-    flask.g.db['suggestions'].insert_one(args)
-
-    message = flask_mail.Message('New suggested announcement for the Omicron VoC page on the COVID-19 Data Portal',
-                                 sender=flask.current_app.config.get('mail')['email'],
-                                 recipients=app.config.get('suggestions')['email_receivers'])
-    mail_body = OMICRON_ANNOUNCEMENT_MAIL_BODY[:]
-    mail_body = mail_body.replace('PLACEHOLDER_NAME', args['name'])
-    mail_body = mail_body.replace('PNACEHOLDER_CONTACT', args['contact'])
-    mail_body = mail_body.replace('PLACEHOLDER_ANNOUCNEMENT_TITLE', args['title'])
-    mail_body = mail_body.replace('PLACEHOLDER_ANNOUNCEMENT_TEXT', args['announcement'])
-    mail_body = mail_body.replace('PLACEHOLDER_SUBMISSION_TIMESTAMP', args['timestamp'])
-    message.body = mail_body
-    mail.send(message)
-    if 'originUrl' in args:
-        page = SUCCESS_PAGE.replace('PLACEHOLDER', args['originUrl'])
-    else:
-        page = SUCCESS_PAGE.replace('<a href="PLACEHOLDER">Back to the page about Omicron VoC.</a>', '')
-    return flask.Response(page, status=200)
-
 @app.route('/forms/add_collection/', methods=['GET', 'POST'])
 def add_collection_form():
     if flask.request.method == 'GET':
