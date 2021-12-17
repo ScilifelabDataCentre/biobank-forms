@@ -76,16 +76,35 @@ def add_biobank_form():
     return flask.Response(page, status=200)
 
 
-SUGGESTION_MAIL_BODY = '''New suggestion for the Covid-19 Data Portal:
+SUGGESTION_MAIL_BODY = '''New suggestion for the COVID-19 Data Portal:
 
-From: PLACEHOLDER_NAME (PLACEHOLDER_EMAIL)
+Submitted: PLACEHOLDER_TIMESTAMP
 
-Type: PLACEHOLDER_TYPE
-
+For the Portal in general:
+Name: PLACEHOLDER_NAME
+Email: PLACEHOLDER_EMAIL
+Type of suggestion or help: PLACEHOLDER_TYPE
 Description: PLACEHOLDER_DESCRIPTION
+
+OR
+
+For the Omicron VoC page - announcement:
+Name: PLACEHOLDER_OMICRON_ANN_NAME
+Contact: PLACEHOLDER_OMICRON_ANN_CONTACT
+Announcement title: PLACEHOLDER_OMICRON_ANN_TITLE
+Announcement text: PLACEHOLDER_OMICRON_ANN_TEXT
+
+OR
+
+For the Omicron VoC page - available data suggestion:
+Name: PLACEHOLDER_OMICRON_AV_DATA_NAME
+Contact: PLACEHOLDER_OMICRON_AV_DATA_EMAIL
+Link: PLACEHOLDER_OMICRON_AV_DATA_LINK
+Description: PLACEHOLDER_OMICRON_AV_DATA_DESCRIPTION
+
 '''
 
-SUGGESTION_TYPES = ('Dataset', 'Data_highlight', 'Research_project',
+SUGGESTION_TYPES = ('DM_support', 'Dataset', 'Data_highlight', 'Research_project',
                     'Journal_publication', 'Preprint', 'Funding_opportunity',
                     'Event', 'Other')
 
@@ -109,14 +128,23 @@ def suggest_form():
                                                                       args[topic] == 'on'))
     flask.g.db['suggestions'].insert_one(args)
 
-    message = flask_mail.Message('New suggestion for the Covid-19 Data Portal',
+    message = flask_mail.Message('New suggestion for the COVID-19 Data Portal',
                                  sender=flask.current_app.config.get('mail')['email'],
                                  recipients=app.config.get('suggestions')['email_receivers'])
     mail_body = SUGGESTION_MAIL_BODY[:]
+    mail_body = mail_body.replace('PLACEHOLDER_TIMESTAMP', args['timestamp'])
     mail_body = mail_body.replace('PLACEHOLDER_NAME', args['Name'])
     mail_body = mail_body.replace('PLACEHOLDER_EMAIL', args['Email'])
     mail_body = mail_body.replace('PLACEHOLDER_DESCRIPTION', args['Description'])
     mail_body = mail_body.replace('PLACEHOLDER_TYPE', args['types'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_ANN_NAME', args['omicron_ann_name'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_ANN_CONTACT', args['omicron_ann_contact'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_ANN_TITLE', args['omicron_ann_announcement_title'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_ANN_TEXT', args['omicron_ann_announcement_text'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_AV_DATA_NAME', args['omicron_av_data_name'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_AV_DATA_EMAIL', args['omicron_av_data_email'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_AV_DATA_LINK', args['omicron_av_data_link'])
+    mail_body = mail_body.replace('PLACEHOLDER_OMICRON_AV_DATA_DESCRIPTION', args['omicron_av_data_description'])
     message.body = mail_body
     mail.send(message)
     if 'originUrl' in args:
