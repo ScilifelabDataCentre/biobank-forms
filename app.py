@@ -136,7 +136,7 @@ Submission timestamp: PLACEHOLDER_SUBMISSION_TIMESTAMP
 '''
 
 @app.route('/forms/omicron_announcement/', methods=['GET', 'POST'])
-def suggest_form():
+def omicron_announcement_form():
     if flask.request.method == 'GET':
         args = dict(flask.request.args)
     elif flask.request.method == 'POST':
